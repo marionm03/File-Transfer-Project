@@ -1,0 +1,36 @@
+import socket                   # Import socket module
+from Crypto.Cipher import AES
+
+port = 50000                    # Reserve a port for your service every new transfer wants a new port or you must wait.
+s = socket.socket()             # Create a socket object
+host = "192.168.66.1"           # Get local machine name
+s.bind((host, port))            # Bind to the port
+s.listen(5)                     # Now wait for client connection.
+
+print ('Server listening....')
+
+while True:
+    conn, addr = s.accept()     # Establish connection with client.
+    print ('Got connection from', addr)
+    data = conn.recv(1024)
+    print(data.decode())
+    print('Server received', repr(data))
+
+    filename='note.txt' #In the same folder or path is this file running must the file you want to tranfser to be
+ 
+    f = open(filename,'rb')
+    l = f.read(1024)
+    key = b'abcd1234efgh5678'
+    cipher = AES.new(key, AES.MODE_EAX)
+    nonce = cipher.nonce
+    ciphertext, tag = cipher.encrypt_and_digest(filename)
+    while (l):
+       conn.send(l)
+       print('Sent ',repr(l))
+       l = f.read(1024)
+    f.close()
+
+    print('Done sending')
+    msg_s = "Thank you for connecting"
+    conn.send(msg_s.encode())
+    conn.close()
